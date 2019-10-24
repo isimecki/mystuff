@@ -1,4 +1,6 @@
 sort;0,1,2,3
+maxNeeded;0;12
+minneeded;1;11
 wrist;Wrist1;6,2,3,4
 wrist;Wrist2;7,5,7,5
 wrist;Wrist3;9,7,5,6

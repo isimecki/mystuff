@@ -14,6 +14,8 @@ import java.util.stream.Stream;
 
 public class Main {
     public static int[] sortOrder;
+    public static int[] statMaxValues = new int[1];
+    public static int[] statMinValues = new int[1];
 
     public static void main(String[] args) {
         Map<String, List<Gear>> gear = new HashMap();
@@ -31,6 +33,34 @@ public class Main {
         }
 
         for (CSVRecord record : records) {
+            if (record.get(0).toLowerCase().contains("maxneeded")) {
+                if (statMaxValues == null) {
+                    statMaxValues = new int[0];
+                }
+                int statIdx = getIntColumnValueAt(record, 1);
+                int statMaxValue = getIntColumnValueAt(record, 2);
+                int[] tempStatMaxValues = new int[statMaxValues.length > (statIdx + 1) ? statMaxValues.length : (statIdx + 1)];
+                for (int i = 0; i < statMaxValues.length; i++) {
+                    tempStatMaxValues[i] = statMaxValues[i];
+                }
+                tempStatMaxValues[statIdx] = statMaxValue;
+                statMaxValues = tempStatMaxValues;
+                continue;
+            }
+            if (record.get(0).toLowerCase().contains("minneeded")) {
+                if (statMinValues == null) {
+                    statMinValues = new int[0];
+                }
+                int statIdx = getIntColumnValueAt(record, 1);
+                int statMinValue = getIntColumnValueAt(record, 2);
+                int[] tempStatMinValues = new int[statMinValues.length > (statIdx + 1) ? statMinValues.length : (statIdx + 1)];
+                for (int i = 0; i < statMinValues.length; i++) {
+                    tempStatMinValues[i] = statMinValues[i];
+                }
+                tempStatMinValues[statIdx] = statMinValue;
+                statMinValues = tempStatMinValues;
+                continue;
+            }
             if (record.get(0).toLowerCase().contains("sort")) {
                 sortOrder = Stream.of(record.get(1).split(",")).mapToInt(Integer::valueOf).toArray();
                 continue;
@@ -44,11 +74,34 @@ public class Main {
             }
         }
 
-        ArrayList combinations = new ArrayList();
-
+        List<Gear> combinations = new ArrayList();
         fillGearCombinations(combinations, new ArrayList(), gear.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+
+        combinations = combinations.stream().filter(o -> {
+            int statIdx = 0;
+            for (int stat : statMaxValues) {
+                if (stat < o.stats[statIdx]) {
+                    return false;
+                }
+                statIdx++;
+            }
+            return true;
+        }).filter(o -> {
+            int statIdx = 0;
+            for (int stat : statMinValues) {
+                if (stat > o.stats[statIdx]) {
+                    return false;
+                }
+                statIdx++;
+            }
+            return true;
+        }).collect(Collectors.toList());
         Collections.sort(combinations);
         combinations.stream().forEach(System.out::println);
+    }
+
+    private static Integer getIntColumnValueAt(CSVRecord record, int i) {
+        return Integer.valueOf(record.get(i));
     }
 
 
